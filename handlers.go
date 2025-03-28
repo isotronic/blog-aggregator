@@ -58,6 +58,25 @@ func loginHandler(s *state, cmd command) error {
 	return nil
 }
 
+func usersHandler(s *state, cmd command) error {
+	users, err := s.db.GetUsers(context.Background())
+	if err != nil {
+		return err
+	}
+
+	loggedIn := ""
+	log.Println("Users:")
+	for _, user := range users {
+		if user.Name == s.cfg.CurrentUserName {
+			loggedIn = "(current)"
+		}
+		fmt.Printf("* %v %v\n", user.Name, loggedIn)
+		loggedIn = ""
+	}
+
+	return nil
+}
+
 func resetHandler(s *state, cmd command) error {
 	err := s.db.ResetUsers(context.Background())
 	if err != nil {

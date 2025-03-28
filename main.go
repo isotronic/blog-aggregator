@@ -1,26 +1,39 @@
 package main
 
 import (
+	"database/sql"
 	"fmt"
 	"os"
 
 	"github.com/isotronic/blog-aggregator/internal/config"
+	"github.com/isotronic/blog-aggregator/internal/database"
+
+	_ "github.com/lib/pq"
 )
 
 type state struct {
-	config *config.Config
+	cfg     *config.Config
+	db      *database.Queries
 }
 
 func main() {
-	cfg, err := config.Read()
+	config, err := config.Read()
 	if err != nil {
 		panic(err)
 	}
 
-	st := state{config: &cfg}
+	db, err := sql.Open("postgres", config.DBUrl)
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+	dbQueries := database.New(db)
 
+	st := state{cfg: &config, db: dbQueries}
+	
 	cmds := commands{}
 	cmds.register("login", loginHandler)
+	cmds.register("register", registerHandler)
 
 	clArgs := os.Args
 	if len(clArgs) < 2 {

@@ -57,3 +57,13 @@ func loginHandler(s *state, cmd command) error {
 	log.Printf("Logged in as %s\n", user.Name)
 	return nil
 }
+
+func resetHandler(s *state, cmd command) error {
+	err := s.db.ResetUsers(context.Background())
+	if err != nil {
+		return err
+	}
+
+	log.Println("Users successfully reset")
+	return nil
+}

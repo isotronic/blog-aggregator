@@ -33,6 +33,7 @@ func main() {
 	cmds := commands{}
 	cmds.register("login", loginHandler)
 	cmds.register("register", registerHandler)
+	cmds.register("reset", resetHandler)
 
 	clArgs := os.Args
 	if len(clArgs) < 2 {
@@ -45,7 +46,6 @@ func main() {
 
 	err = cmds.run(&st, command{name, args})
 	if err != nil {
-		log.Println(err)
-		os.Exit(1)
+		log.Fatalln(err)
 	}
 }

@@ -3,6 +3,8 @@ package main
 import (
 	"context"
 	"fmt"
+	"log"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -30,7 +32,7 @@ func registerHandler(s *state, cmd command) error {
 		return err
 	}
 
-	fmt.Printf("User created: %v\n", newUser)
+	log.Printf("User created: %v\n", newUser)
 	return nil
 }
 
@@ -39,11 +41,19 @@ func loginHandler(s *state, cmd command) error {
 		return fmt.Errorf("missing username")
 	}
 
-	err := s.cfg.SetUser(cmd.args[0])
+	user, err := s.db.GetUserByName(context.Background(), cmd.args[0])
+	if err != nil {
+		if strings.Contains(err.Error(), "no rows in result set") {
+			return fmt.Errorf("user not found")
+		}
+		return err
+	}
+
+	err = s.cfg.SetUser(user.Name)
 	if err != nil {
 		return err
 	}
 
-	fmt.Printf("Logged in as %s\n", cmd.args[0])
+	log.Printf("Logged in as %s\n", user.Name)
 	return nil
 }

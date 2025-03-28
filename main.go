@@ -2,7 +2,7 @@ package main
 
 import (
 	"database/sql"
-	"fmt"
+	"log"
 	"os"
 
 	"github.com/isotronic/blog-aggregator/internal/config"
@@ -19,13 +19,12 @@ type state struct {
 func main() {
 	config, err := config.Read()
 	if err != nil {
-		panic(err)
+		log.Fatalln(err)
 	}
 
 	db, err := sql.Open("postgres", config.DBUrl)
 	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
+		log.Fatalln(err)
 	}
 	dbQueries := database.New(db)
 
@@ -37,7 +36,7 @@ func main() {
 
 	clArgs := os.Args
 	if len(clArgs) < 2 {
-		fmt.Println("no command given")
+		log.Println("no command given")
 		os.Exit(1)
 	}
 
@@ -46,7 +45,7 @@ func main() {
 
 	err = cmds.run(&st, command{name, args})
 	if err != nil {
-		fmt.Println(err)
+		log.Println(err)
 		os.Exit(1)
 	}
 }

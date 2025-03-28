@@ -19,12 +19,12 @@ type state struct {
 func main() {
 	config, err := config.Read()
 	if err != nil {
-		log.Fatalln(err)
+		log.Fatalf("Error: %v", err)
 	}
 
 	db, err := sql.Open("postgres", config.DBUrl)
 	if err != nil {
-		log.Fatalln(err)
+		log.Fatalf("Error: %v", err)
 	}
 	dbQueries := database.New(db)
 
@@ -38,8 +38,7 @@ func main() {
 
 	clArgs := os.Args
 	if len(clArgs) < 2 {
-		log.Println("no command given")
-		os.Exit(1)
+		log.Fatalln("Error: no command given")
 	}
 
 	name := clArgs[1]
@@ -47,6 +46,6 @@ func main() {
 
 	err = cmds.run(&st, command{name, args})
 	if err != nil {
-		log.Fatalln(err)
+		log.Fatalf("Error: %v", err)
 	}
 }

@@ -96,17 +96,12 @@ func aggHandler(s *state, cmd command) error {
 	return nil
 }
 
-func addFeedHandler(s *state, cmd command) error {
+func addFeedHandler(s *state, cmd command, user database.User) error {
 	if len(cmd.args) < 2 {
 		return fmt.Errorf("missing feed name or url")
 	}
 	name := cmd.args[0]
 	url := cmd.args[1]
-
-	user, err := s.db.GetUserByName(context.Background(), s.cfg.CurrentUserName)
-	if err != nil {
-		return err
-	}
 
 	feed := database.CreateFeedParams{
 		ID: uuid.New(),
@@ -118,6 +113,18 @@ func addFeedHandler(s *state, cmd command) error {
 	}
 
 	newFeed, err := s.db.CreateFeed(context.Background(), feed)
+	if err != nil {
+		return err
+	}
+
+	newFollow := database.CreateFeedFollowParams{
+		ID: uuid.New(),
+		UserID: user.ID,
+		FeedID: newFeed.ID,
+		CreatedAt: time.Now(),
+		UpdatedAt: time.Now(),
+	}
+	_, err = s.db.CreateFeedFollow(context.Background(), newFollow)
 	if err != nil {
 		return err
 	}
@@ -144,5 +151,66 @@ func feedHandler(s *state, cmd command) error {
 		fmt.Println("-----")
 	}
 
+	return nil
+}
+
+func followHandler(s *state, cmd command, user database.User) error {
+	if len(cmd.args) < 1 {
+		return fmt.Errorf("missing feed url")
+	}
+	url := cmd.args[0]
+
+	feed, err := s.db.GetFeedByUrl(context.Background(), url)
+	if err != nil {
+		return err
+	}
+
+	newFollow := database.CreateFeedFollowParams{
+		ID: uuid.New(),
+		UserID: user.ID,
+		FeedID: feed.ID,
+		CreatedAt: time.Now(),
+		UpdatedAt: time.Now(),
+	}
+	feedFollow, err := s.db.CreateFeedFollow(context.Background(),newFollow)
+	if err != nil {
+		return err
+	}
+
+	fmt.Printf("%v followed feed: %v\n", feedFollow.UserName, feedFollow.FeedName)
+
+	return nil
+}
+
+func followingHandler(s *state, cmd command, user database.User) error {
+	feeds, err := s.db.GetFeedFollowsForUser(context.Background(),user.ID)
+	if err != nil {
+		return err
+	}
+
+	fmt.Println("You are following:")
+	for _, feed := range feeds {
+		fmt.Printf(" * %v\n", feed.FeedName)
+	}
+
+	return nil
+}
+
+func unfollowHandler(s *state, cmd command, user database.User) error {
+	if len(cmd.args) < 1 {
+		return fmt.Errorf("missing feed url")
+	}
+
+	unfollow := database.DeleteFeedFollowByUrlParams{
+		UserID: user.ID,
+		Url: cmd.args[0],
+	}
+	err := s.db.DeleteFeedFollowByUrl(context.Background(), unfollow)
+	if err != nil {
+		return err
+	}
+	
+	fmt.Printf("You unfollowed feed: %v\n", cmd.args[0])
+	
 	return nil
 }

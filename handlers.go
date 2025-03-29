@@ -10,6 +10,26 @@ import (
 	"github.com/isotronic/blog-aggregator/internal/database"
 )
 
+func aggHandler(s *state, cmd command) error {
+	if len(cmd.args) == 0 {
+		return fmt.Errorf("missing duration argument")
+	}
+
+	timeBetween, err := time.ParseDuration(cmd.args[0])
+	if err != nil {
+		return err
+	}
+
+	fmt.Printf("Collecting feeds every %v...\n", timeBetween.String())
+	ticker := time.NewTicker(timeBetween)
+	for ; ; <-ticker.C {
+		err := scrapeFeed(s)
+		if err != nil {
+			fmt.Printf("Error fetching feed: %v\n", err) 
+		}
+	}
+}
+
 func registerHandler(s *state, cmd command) error {
 	if len(cmd.args) == 0 {
 		return fmt.Errorf("missing username")
@@ -83,16 +103,6 @@ func resetHandler(s *state, cmd command) error {
 	}
 
 	fmt.Println("Users successfully reset")
-	return nil
-}
-
-func aggHandler(s *state, cmd command) error {
-	feed, err := fetchFeed(context.Background(), "https://www.wagslane.dev/index.xml")
-	if err != nil {
-		return err
-	}
-
-	fmt.Println(feed)
 	return nil
 }
 
@@ -211,6 +221,6 @@ func unfollowHandler(s *state, cmd command, user database.User) error {
 	}
 	
 	fmt.Printf("You unfollowed feed: %v\n", cmd.args[0])
-	
+
 	return nil
 }

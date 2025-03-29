@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"strconv"
 	"strings"
 	"time"
 
@@ -221,6 +222,42 @@ func unfollowHandler(s *state, cmd command, user database.User) error {
 	}
 	
 	fmt.Printf("You unfollowed feed: %v\n", cmd.args[0])
+
+	return nil
+}
+
+func browseHandler(s *state, cmd command, user database.User) error {
+	limit := int32(2)
+	offset := int32(0)
+	if len(cmd.args) > 0 {
+		parsedLimit, err := strconv.ParseInt(cmd.args[0], 10, 32)
+		if err != nil {
+			return err
+		}
+		limit = int32(parsedLimit)
+	}
+	if len(cmd.args) > 1 {
+		parsedOffset, err := strconv.ParseInt(cmd.args[1], 10, 32)
+		if err != nil {
+			return err
+		}
+		offset = int32(parsedOffset)
+	}
+	
+	params := database.GetPostsForUserParams{
+		UserID: user.ID,
+		Limit: limit,
+		Offset: offset,
+	}
+	posts, err := s.db.GetPostsForUser(context.Background(), params)
+	if err != nil {
+		return err
+	}
+
+	fmt.Printf("Posts:\n")
+	for _, post := range posts {
+		fmt.Printf(" * %v\n", post.Title.String)
+	}
 
 	return nil
 }
